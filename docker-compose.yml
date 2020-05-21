@@ -1,0 +1,19 @@
+version: '2'
+services:
+  mysql:
+    image: mysql:8.0.19
+    container_name: bmysql
+    command: mysqld --user=root --verbose
+    ports:
+    - 8306:3306
+    environment:
+    - MYSQL_ROOT_PASSWORD=root
+    restart: always
+    volumes:
+    - ./var/mysql/data:/var/lib/mysql
+  python:
+    image: python:3.7
+    container_name: bpython
+    restart: always
+    volumes:
+    - ./crawl_pycode /root/crawl_pycode
