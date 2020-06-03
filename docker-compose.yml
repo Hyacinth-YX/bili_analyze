@@ -12,8 +12,9 @@ services:
     volumes:
     - ./var/mysql/data:/var/lib/mysql
   python:
-    image: python:3.7
+    build:
+      context: ./crawl_pycode
+      dockerfile: pycrawl_dockerfile
     container_name: bpython
-    restart: always
     volumes:
-    - ./crawl_pycode /root/crawl_pycode
+    - ./crawl_pycode/:/root/crawl_pycode/
