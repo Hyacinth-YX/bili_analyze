@@ -8,7 +8,8 @@ import utils.normal as normal
 from bs4 import BeautifulSoup
 import re
 import threading
-
+from utils.proxy import refresh_db_ip
+from utils.proxy import search_new_ip
 
 # 定时获取首页推荐的视频信息 入口函数
 def main_get_recommend_video():
@@ -49,7 +50,7 @@ def main_get_recommend_video():
 
 
 def download_vresult_row(aid):
-    req_ob = req_util (True)
+    req_ob = req_util ()
     url = get_url.get_vinfo_from_aid (aid)
     result = req_ob.request_content (url)
     timestamp = normal.timestamp2str (int (time.time ()))
@@ -69,13 +70,14 @@ def main_download_all_vresult_now():
     aid_list = conn_ob.select_all_aid ()
     for i, row in enumerate (aid_list):
         download_vresult_row (row["aid"])
+        time.sleep(1)
         print (f"\r Downloading vresult {(i + 1) / len (aid_list):3.2%} ...", end="")
     print ("\rDownload vresult finished!")
 
 
 # 获取热词及热词相关的20个最新视频并储存 入口函数
 def main_get_hot_word_video():
-    req_ob = req_util (PROXY=True)
+    req_ob = req_util ()
     url = get_url.get_hotword_url ()
     content = req_ob.request_content (url)
     con_list = json.loads (content)
@@ -110,7 +112,7 @@ def download_hot_word_aid(hotword):
 
 
 def download_video_tag(aid):
-    req_ob = req_util (True)
+    req_ob = req_util ()
     url = get_url.get_tag_url (aid)
     content = req_ob.request_content (url)
     info = json.loads (content)
@@ -123,7 +125,7 @@ def download_video_tag(aid):
 
 
 def download_detail_vinfo(bvid):
-    req_ob = req_util (True)
+    req_ob = req_util ()
     url = get_url.get_vinfo_by_bvid (bvid)
     content = req_ob.request_content (url)
     info = json.loads (content)["data"]
@@ -144,7 +146,7 @@ def download_detail_vinfo(bvid):
 
 
 def download_follower_by_uid(uid):
-    req_ob = req_util (True)
+    req_ob = req_util ()
     url = get_url.get_follower_info (uid)
     content = req_ob.request_content (url)
     timestamp = normal.timestamp2str (int (time.time ()))
@@ -225,14 +227,29 @@ def run_download_follower(asleep=1.5, dual=24):
         print (f"第{i}次 follower 下载完成")
         i += 1
 
+def run_refresh_ips(dual=12):
+    while True:
+        time.sleep(dual * 60 * 60)
+        print("刷新ip池可用ip")
+        refresh_db_ip()
+        ip_count = conn_ob.count_all_ip()
+        if ip_count < 15:
+            search_new_ip()
+
+def main():
+    refresh_db_ip ()
+    t1 = threading.Thread (target=run_download_recommend)
+    t2 = threading.Thread (target=run_download_hotword)
+    t3 = threading.Thread (target=run_download_list_vresult)
+    t4 = threading.Thread (target=run_download_follower)
+    t5 = threading.Thread (target=run_refresh_ips)
+    t1.start ()
+    t2.start ()
+    t3.start ()
+    t4.start ()
+    t5.start ()
+
+
 conn_ob = conn_util ()
 if __name__ == '__main__':
-    # t1 = threading.Thread(target=run_download_recommend)
-    # t2 = threading.Thread(target=run_download_hotword)
-    # t3 = threading.Thread(target=run_download_list_vresult)
-    # t4 = threading.Thread(target=run_download_follower)
-    # t1.start()
-    # t2.start()
-    # t3.start()
-    # t4.start()
-    run_download_recommend()
+    main()

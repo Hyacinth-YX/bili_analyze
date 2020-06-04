@@ -66,7 +66,10 @@ class GetIP (object):
             res = requests.get (url=test_url, params=params, proxies=local_proxy, headers=self.req_ob.get_headers (),
                                 timeout=time_out)
             print (str (res.status_code))
-            return True
+            if res.status_code == 200:
+                return True
+            else:
+                return False
         except requests.exceptions.ProxyError as e:
             print ('连接次数达上限！')
             return False
@@ -76,6 +79,8 @@ class GetIP (object):
         except requests.exceptions.ConnectionError as e:
             print ('连接失败！')
             return False
+        except Exception as e:
+            print(e)
 
     def test_ip_and_get(self):
         self._get_ip_list ()
@@ -98,26 +103,25 @@ class GetIP (object):
                 continue
         return ips_active
 
-    def test_ip_and_delect(self, ip_list):
+    def test_ip_and_delete(self, ip_list):
         for i in range (0, len (ip_list)):
             print ('test ip {0}'.format (i) + ': ' + ip_list[i]['ip_addr'] + ':' + ip_list[i]['ip_port'])
-            rst = self.test_ip (ip_list[i]['ip_addr'], ip_list[i]['ip_port'], ip_list[i]['http_type'].lower (), 60)
+            rst = self.test_ip (ip_list[i]['ip_addr'], ip_list[i]['ip_port'], ip_list[i]['http_type'].lower ())
             if not rst:
+                print(f"DELETE ip {ip_list[i]['ip_addr']}:{ip_list[i]['ip_port']}")
                 conn_ob.delete_ip (ip_list[i])
             time.sleep (1)
 
 
 def refresh_db_ip():
-    ip_tool = GetIP
-    conn_ob = conn_util
+    ip_tool = GetIP()
     data = conn_ob.select_all_ip ()
-    ip_tool.test_ip_and_delect (data)
+    ip_tool.test_ip_and_delete (data)
 
 
 def search_new_ip():
     ip_tool = GetIP ()
     active_ip_list = ip_tool.test_ip_and_get ()
-    conn_ob = conn_util ()
     for ip_info in active_ip_list:
         # 查重
         j = eval (json.loads (ip_info))
@@ -125,6 +129,7 @@ def search_new_ip():
         if count == 0:
             conn_ob.insert_iptable (j)
 
-
+conn_ob = conn_util ()
 if __name__ == "__main__":
-    search_new_ip ()
+    refresh_db_ip()
+    # search_new_ip ()

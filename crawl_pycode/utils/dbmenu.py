@@ -43,6 +43,12 @@ class conn_util ():
         count = data[0]["count"]
         return count
 
+    def count_all_ip(self):
+        sql = f"""select count(*) as count from ip_table"""
+        data = self.select(sql)
+        count = data[0]["count"]
+        return count
+
     def insert_iptable(self, info_list):
         insert_sql = "insert into ip_table (ip_addr, ip_port, server_addr, anonymous, http_type, speed,conn_time, " \
                      "alive_time, validate_time) " \
@@ -59,7 +65,7 @@ class conn_util ():
         self.try_sql (insert_sql)
 
     def delete_ip(self, ip_info):
-        del_sql = 'delect from ip_table where ip_addr="{0}" and ip_port="{1}" and http_type="{2}"'.format (
+        del_sql = 'delete from ip_table where ip_addr="{0}" and ip_port="{1}" and http_type="{2}"'.format (
             ip_info['ip_addr'], ip_info['ip_port'], ip_info['http_type'])
         self.try_sql (del_sql)
 
@@ -152,4 +158,7 @@ class conn_util ():
 if __name__ == '__main__':
     # test ip
     conn_ob = conn_util ()
-    conn_ob.select_all_bvid ()
+    data = conn_ob.count_all_ip()
+    print(data)
+
+
