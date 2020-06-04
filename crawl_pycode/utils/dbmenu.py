@@ -94,6 +94,16 @@ class conn_util ():
         count = data[0]["count"]
         return count
 
+    def count_aid_tag(self,aid,tagname):
+        sql = f"""select count(*) as count from aid_tag where aid={aid} and tagname='{tagname}'"""
+        data = self.select (sql)
+        count = data[0]["count"]
+        return count
+
+    def insert_follower(self,time,uid,follower_num):
+        sql = f"insert into follower values ('{time}',{uid},{follower_num})"
+        self.try_sql(sql)
+
     def insert_userinfo(self, uid, uname):
         sql = f"insert into userinfo values ({uid},'{uname}')"
         self.try_sql (sql)
@@ -116,18 +126,30 @@ class conn_util ():
 
     def select_all_bvid(self):
         sql = f"""select bvid from vinfo"""
-        data = self.select(sql)
+        data = self.select (sql)
         return data
 
     def select_all_aid(self):
         sql = f"""select aid from vinfo"""
-        data = self.select(sql)
+        data = self.select (sql)
         return data
 
+    def select_all_uid(self):
+        sql = f"""select uid from userinfo"""
+        data = self.select (sql)
+        return data
 
-s_aid_sql = """
-"""
+    def insert_hotword(self, time, rank, hotword):
+        sql = f"""insert into hotword values ('{time}',{rank},'{hotword}')"""
+        self.try_sql (sql)
+
+    def insert_aid_hotword(self, aid, hotword):
+        sql = f"""insert into aid_hotword values ({aid},'{hotword}')"""
+        self.try_sql (sql)
+    # ___________________________FIN video_info 工具 _______________________________________________
+
+
 if __name__ == '__main__':
     # test ip
     conn_ob = conn_util ()
-    conn_ob.select_all_bvid()
+    conn_ob.select_all_bvid ()

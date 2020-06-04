@@ -1,7 +1,7 @@
 import requests
 import random
-from userAgent import *
-from dbmenu import conn_util
+from utils.userAgent import *
+from utils.dbmenu import conn_util
 
 class req_util ():
     proxy_list = []
