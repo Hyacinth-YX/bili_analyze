@@ -18,4 +18,3 @@ services:
     container_name: bpython
     volumes:
     - ./crawl_pycode/:/root/crawl_pycode/
-    command: python /root/crawl_pycode/Main.py
