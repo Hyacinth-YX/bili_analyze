@@ -144,7 +144,6 @@ def download_detail_vinfo(bvid):
             conn_ob.insert_userinfo (uid, uname)
     return
 
-
 def download_follower_by_uid(uid):
     req_ob = req_util ()
     url = get_url.get_follower_info (uid)
@@ -162,7 +161,7 @@ def main_download_follower_now():
         print (f"\rDownloading follower {(i + 1) / len (uid_list):3.2%} ...", end="")
     print ("\rDownload follower finished!")
 
-def run_download_recommend(counter=20, dual=12):
+def run_download_recommend(counter=20, dual=5):
     print (f"\ndownload recommend start，间隔{dual}小时下载一次")
     # 下载20次推荐首页的视频相关信息，每次下载间隔12小时
     for i in range (1, counter + 1):
@@ -177,7 +176,7 @@ def run_download_recommend(counter=20, dual=12):
         print (f"第{i}次 推荐视频 下载完成")
 
 
-def run_download_hotword(counter=10, dual=24, asleep=0.2):
+def run_download_hotword(counter=20, dual=12, iasleep=0.2):
     time.sleep (asleep * 60 * 60)
     print (f"\ndownload hotword start，间隔{dual}小时下载一次")
     # 下载10次热词相关视频及热词，每次间隔24小时
@@ -193,7 +192,7 @@ def run_download_hotword(counter=10, dual=24, asleep=0.2):
         print (f"第{i}次 热词视频 下载完成")
 
 
-def run_download_list_vresult(asleep=1, dual=6):
+def run_download_list_vresult(asleep=1, dual=3):
     time.sleep (asleep * 60 * 60)
     print (f"\ndownload vresult start , 间隔{dual}小时下载一次该时段内的视频详细成绩信息")
     # 在程序运行期间，每隔六小时运行一次
