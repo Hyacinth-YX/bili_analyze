@@ -26,26 +26,29 @@ def main_get_recommend_video():
         aid = video.get ('aid')
         # 尝试更新vinfo
         # 检测aid是否存在于数据库中 存在则跳过
-        count_of_aid = conn_ob.count_aid (aid)
-        if count_of_aid == 0:
-            bvid = video.get ('bvid')
-            area = video.get ('tname')
-            vname = video.get ('title')
-            uid = video.get ('owner').get ('mid')
-            ctime = video.get ('ctime')
-            cre_time = normal.timestamp2str (ctime)
-            # 尝试更新userinfo
-            # 如果uid存在于数据库中，则跳过
-            count_of_uid = conn_ob.count_uid (uid)
-            conn_ob.insert_vinfo (aid, bvid, uid, vname, area, cre_time)
-            if count_of_uid == 0:
-                uname = video.get ('owner').get ('name')
-                try:
-                    conn_ob.insert_userinfo (uid, uname)
-                except:
-                    pass
-            # 获取该视频的tag
-            download_video_tag (aid)
+        try:
+            count_of_aid = conn_ob.count_aid (aid)
+            if count_of_aid == 0:
+                bvid = video.get ('bvid')
+                area = video.get ('tname')
+                vname = video.get ('title')
+                uid = video.get ('owner').get ('mid')
+                ctime = video.get ('ctime')
+                cre_time = normal.timestamp2str (ctime)
+                # 尝试更新userinfo
+                # 如果uid存在于数据库中，则跳过
+                count_of_uid = conn_ob.count_uid (uid)
+                conn_ob.insert_vinfo (aid, bvid, uid, vname, area, cre_time)
+                if count_of_uid == 0:
+                    uname = video.get ('owner').get ('name')
+                    try:
+                        conn_ob.insert_userinfo (uid, uname)
+                    except:
+                        pass
+                # 获取该视频的tag
+                download_video_tag (aid)
+        except:
+            pass
     return 0
 
 
@@ -69,8 +72,11 @@ def download_vresult_row(aid):
 def main_download_all_vresult_now():
     aid_list = conn_ob.select_all_aid ()
     for i, row in enumerate (aid_list):
-        download_vresult_row (row["aid"])
-        time.sleep(1)
+        try:
+            download_vresult_row (row["aid"])
+            time.sleep(1)
+        except:
+            pass
         print (f"\r Downloading vresult {(i + 1) / len (aid_list):3.2%} ...", end="")
     print ("\rDownload vresult finished!")
 
@@ -89,7 +95,10 @@ def main_get_hot_word_video():
         hotword = row["keyword"]
         rank = row["pos"]
         conn_ob.insert_hotword (formatime, rank, hotword)
-        download_hot_word_aid (hotword)
+        try:
+            download_hot_word_aid (hotword)
+        except:
+            pass
         print (f"\rDownloading hotword {i / total:3.2%}", end="")
     print ("\rDownloaded!")
 
@@ -157,7 +166,10 @@ def download_follower_by_uid(uid):
 def main_download_follower_now():
     uid_list = conn_ob.select_all_uid ()
     for i, row in enumerate (uid_list):
-        download_follower_by_uid (row["uid"])
+        try:
+            download_follower_by_uid (row["uid"])
+        except:
+            pass
         print (f"\rDownloading follower {(i + 1) / len (uid_list):3.2%} ...", end="")
     print ("\rDownload follower finished!")
 
@@ -176,7 +188,7 @@ def run_download_recommend(counter=20, dual=5):
         print (f"第{i}次 推荐视频 下载完成")
 
 
-def run_download_hotword(counter=20, dual=12, iasleep=0.2):
+def run_download_hotword(counter=20, dual=6, asleep=0.2):
     time.sleep (asleep * 60 * 60)
     print (f"\ndownload hotword start，间隔{dual}小时下载一次")
     # 下载10次热词相关视频及热词，每次间隔24小时
@@ -209,7 +221,7 @@ def run_download_list_vresult(asleep=1, dual=3):
         print (f"第{i}次 详细信息 下载完成")
         i += 1
 
-def run_download_follower(asleep=1.5, dual=24):
+def run_download_follower(asleep=1.5, dual=12):
     time.sleep (asleep * 60 * 60)
     print (f"\ndownload vresult start , 间隔{dual}小时下载一次该时段内的视频详细成绩信息")
     # 在程序运行期间，每隔六小时运行一次
