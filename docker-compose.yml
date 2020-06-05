@@ -18,5 +18,3 @@ services:
     container_name: bpython
     volumes:
     - ./crawl_pycode/:/root/crawl_pycode/
-    - /etc/localtime:/etc/localtime:ro
-    - /etc/timezone:/etc/timezone:ro

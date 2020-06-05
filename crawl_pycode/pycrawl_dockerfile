@@ -3,6 +3,8 @@ COPY ./requirements.txt /root/requirements.txt
 RUN pip install --upgrade pip \
  && pip install --default-timeout=100 -r /root/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple \
  && rm -f /root/requirements.txt
+COPY /etc/localtime /etc/localtime
+COPY /etc/timezone /etc/timezone
 CMD HOST_IP=`ip route | grep default | awk '{ printf "%s",$3 }'` && \
  cat /etc/hosts | sed "s/127.0.0.1/$HOST_IP/" > /tmp/etc_hosts && \
  cp /tmp/etc_hosts /etc/hosts && \
