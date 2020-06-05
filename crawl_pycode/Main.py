@@ -22,7 +22,8 @@ def main_get_recommend_video():
     except Exception as e:
         print (e)
         pass
-    for video in result:
+    total = len(result)
+    for (i,video) in enumerate(result):
         aid = video.get ('aid')
         # 尝试更新vinfo
         # 检测aid是否存在于数据库中 存在则跳过
@@ -49,6 +50,7 @@ def main_get_recommend_video():
                 download_video_tag (aid)
         except:
             pass
+        print(f"\rdownloading recommend {(i+1)/total : 3.2%}......",end="")
     return 0
 
 
@@ -113,10 +115,16 @@ def download_hot_word_aid(hotword):
         bvid = re.findall (r"/(BV[0-9a-zA-Z]{10})", v.next.attrs["href"])[0]
         aid = normal.get_aid_from_BV (bvid)
         conn_ob.insert_aid_hotword (aid, hotword)
-        # 获取并储存热词对应该视频的详细信息
-        download_detail_vinfo (bvid)
-        # 获取并储存热词对应该视频的tag
-        download_video_tag (aid)
+        try:
+            # 获取并储存热词对应该视频的详细信息
+            download_detail_vinfo (bvid)
+        except:
+            pass
+        try:
+            # 获取并储存热词对应该视频的tag
+            download_video_tag (aid)
+        except:
+            pass
     return
 
 
