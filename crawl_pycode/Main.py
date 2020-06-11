@@ -190,7 +190,6 @@ def run_download_recommend(counter=20, dual=5):
             main_get_recommend_video ()
         except Exception as e:
             print (e)
-            normal.retry (main_get_recommend_video, 3)
             pass
         time.sleep (dual * 60 * 60)
         print (f"第{i}次 推荐视频 下载完成")
@@ -206,13 +205,12 @@ def run_download_hotword(counter=20, dual=6, asleep=0.2):
             main_get_hot_word_video ()
         except Exception as e:
             print (e)
-            normal.retry (main_get_hot_word_video, 3)
             pass
         time.sleep (dual * 60 * 60)
         print (f"第{i}次 热词视频 下载完成")
 
 
-def run_download_list_vresult(asleep=1, dual=3):
+def run_download_list_vresult(asleep=1, dual=6):
     time.sleep (asleep * 60 * 60)
     print (f"\ndownload vresult start , 间隔{dual}小时下载一次该时段内的视频详细成绩信息")
     # 在程序运行期间，每隔六小时运行一次
