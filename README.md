@@ -4,7 +4,7 @@
 # Install
 项目主要使用python撰写，所需python包均会导出在代码目录下requirements.txt中。安装所需包请使用
 
-    `$ pip install -r requirements.txt`
+    $ pip install -r requirements.txt
 
 在爬虫部分`./codes/crawl-preprocess-storage/crawl`使用docker部署了python和mysql服务，
 并在程序中设置了定时任务。为了运行crawl部分代码，请安装docker和docker-compose
