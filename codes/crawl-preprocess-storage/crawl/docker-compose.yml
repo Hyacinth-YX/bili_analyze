@@ -20,3 +20,4 @@ services:
     - ./crawl_pycode/:/root/crawl_pycode/
     - ./time_file/etc/localtime:/etc/localtime
     - ./time_file/etc/timezone:/etc/timezone
+    restart: always
