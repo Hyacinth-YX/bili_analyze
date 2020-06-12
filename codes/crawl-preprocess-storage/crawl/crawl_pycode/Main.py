@@ -252,6 +252,8 @@ def run_refresh_ips(dual=12):
             search_new_ip()
 
 def main():
+    print("正在等待mysql启动，请等待")
+    time.sleep(20)
     refresh_db_ip ()
     t1 = threading.Thread (target=run_download_recommend)
     t2 = threading.Thread (target=run_download_hotword)
