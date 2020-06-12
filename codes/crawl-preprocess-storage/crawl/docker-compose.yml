@@ -14,7 +14,7 @@ services:
   python:
     build:
       context: crawl_pycode
-      dockerfile: crawl_pycode/pycrawl_dockerfile
+      dockerfile: ./crawl_pycode/pycrawl_dockerfile
     container_name: bpython
     volumes:
     - ./crawl_pycode/:/root/crawl_pycode/
