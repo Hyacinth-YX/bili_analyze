@@ -221,7 +221,6 @@ def run_download_list_vresult(asleep=1, dual=6):
             main_download_all_vresult_now ()
         except Exception as e:
             print (e)
-            normal.retry (main_download_all_vresult_now, 3)
             pass
         time.sleep (dual * 60 * 60)
         print (f"第{i}次 详细信息 下载完成")
@@ -238,7 +237,6 @@ def run_download_follower(asleep=1.5, dual=12):
             main_download_follower_now()
         except Exception as e:
             print (e)
-            normal.retry (main_download_follower_now, 3)
             pass
         time.sleep (dual * 60 * 60)
         print (f"第{i}次 follower 下载完成")

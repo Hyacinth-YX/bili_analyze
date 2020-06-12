@@ -15,11 +15,3 @@ def get_aid_from_BV(bvid):
     aid = ret['data']['aid']
     return aid
 
-def retry(fun,num,attrs=None):
-    while num:
-        try:
-            print ("retrying once more", e)
-            fun(attrs)
-        except Exception as e:
-            num -= 1
-            time.sleep(2)
