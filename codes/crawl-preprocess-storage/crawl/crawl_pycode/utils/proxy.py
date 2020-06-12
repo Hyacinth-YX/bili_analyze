@@ -80,7 +80,7 @@ class GetIP (object):
             print ('连接失败！')
             return False
         except Exception as e:
-            print(e)
+            print (e)
 
     def test_ip_and_get(self):
         self._get_ip_list ()
@@ -108,13 +108,13 @@ class GetIP (object):
             print ('test ip {0}'.format (i) + ': ' + ip_list[i]['ip_addr'] + ':' + ip_list[i]['ip_port'])
             rst = self.test_ip (ip_list[i]['ip_addr'], ip_list[i]['ip_port'], ip_list[i]['http_type'].lower ())
             if not rst:
-                print(f"DELETE ip {ip_list[i]['ip_addr']}:{ip_list[i]['ip_port']}")
+                print (f"DELETE ip {ip_list[i]['ip_addr']}:{ip_list[i]['ip_port']}")
                 conn_ob.delete_ip (ip_list[i])
             time.sleep (1)
 
 
 def refresh_db_ip():
-    ip_tool = GetIP()
+    ip_tool = GetIP ()
     data = conn_ob.select_all_ip ()
     ip_tool.test_ip_and_delete (data)
 
@@ -129,7 +129,8 @@ def search_new_ip():
         if count == 0:
             conn_ob.insert_iptable (j)
 
+time.sleep(20)
 conn_ob = conn_util ()
 if __name__ == "__main__":
-    refresh_db_ip()
+    refresh_db_ip ()
     # search_new_ip ()
