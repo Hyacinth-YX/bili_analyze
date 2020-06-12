@@ -13,8 +13,8 @@ services:
     - ./var/mysql/data:/var/lib/mysql
   python:
     build:
-      context: crawl_pycode
-      dockerfile: ./crawl_pycode/pycrawl_dockerfile
+      context: ./crawl_pycode
+      dockerfile: pycrawl_dockerfile
     container_name: bpython
     volumes:
     - ./crawl_pycode/:/root/crawl_pycode/
