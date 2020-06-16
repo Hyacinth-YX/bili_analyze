@@ -49,7 +49,8 @@ def main_get_recommend_video():
                 # 获取该视频的tag
                 download_video_tag (aid)
         except:
-            pass
+            print (f"\rdownloading failed recommend {(i + 1) / total : 3.2%}...... \n", end="")
+            continue
         print(f"\rdownloading recommend {(i+1)/total : 3.2%}......",end="")
     return 0
 
