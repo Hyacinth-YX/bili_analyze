@@ -6,6 +6,8 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
+import time
+import random
 
 
 class LSTM (nn.Module):
@@ -26,64 +28,65 @@ class LSTM (nn.Module):
         return predictions[-1]
 
 
-def create_inout_sequences(input_data, tw):
-    inout_seq = []
-    L = len (input_data)
-    for i in range (L - tw):
-        train_seq = input_data[i:i + tw]
-        train_label = input_data[i + tw:i + tw + 1]
-        inout_seq.append ((train_seq, train_label))
-    return inout_seq
+def save_model(model, epoch):
+    t = time.strftime ("%Y%m%d%H%M%s")
+    filename = f"{Model_Folder}/{t}_{epoch}_params.pkl"
+    torch.save (model.state_dict (), filename)
 
 
-def pre_process(data_item):
-    isnull = data_item.isnull ()
-    nullindex = data_item[isnull].index.tolist ()
-    data_pre = data_item.drop (nullindex)
-    train_data_len = int (len (data_pre) - 12 - 1)
-    train_data = data_pre[0:train_data_len]
-    test_data = data_pre[train_data_len + 1:]
-    # print(len(train_data))
-    # print(len(test_data))
-    normaled_train_data, scaler = data_normalized (train_data)
-    normaled_train_data = torch.FloatTensor (normaled_train_data).view (-1)
-    normaled_test_data, scaler_test = data_normalized (test_data)
-    normaled_test_data = torch.FloatTensor (normaled_test_data).view (-1)
-    return normaled_train_data, normaled_test_data, test_data, train_data, scaler, scaler_test
+def load_model(model, filename):
+    model.load_state_dict (torch.load (f"{Model_Folder}/{filename}"))
 
-
-def data_normalized(data):
-    scaler = MinMaxScaler (feature_range=(-1, 1))
-    train_data_normalized = scaler.fit_transform (data.to_numpy ().reshape (-1, 1))
-    return train_data_normalized, scaler
-
+def evalute(model, test_seq):
+    model.eval()
+    correct = 0
+    total = len(test_seq)
+    for x, y in test_seq:
+        with torch.no_grad():
+            logits = model(x).reshape(1,-1)
+            pred = logits.argmax(dim=1)
+        correct += torch.eq(pred, y).sum().float().item()
+    return correct / total # acc
 
 def train_model(train_inout_seq, model, epochs=150):
+    val_list = pd.DataFrame (columns=["loss","val_acc"], index=range (epochs))
+    best_epoch = 0
+    best_acc = 0
     for i in range (epochs):
+        total = len (train_inout_seq)
+        fi = 0
         for seq, labels in train_inout_seq:
             optimizer.zero_grad ()
             model.hidden_cell = (torch.zeros (1, 1, model.hidden_layer_size),
                                  torch.zeros (1, 1, model.hidden_layer_size))
-
             y_pred = model (seq)
-
+            y_pred = y_pred.reshape (1, -1)
             single_loss = loss_function (y_pred, labels)
             single_loss.backward ()
             optimizer.step ()
 
-        if i % 25 == 1:
-            print (f'epoch: {i:3} loss: {single_loss.item ():10.8f}')
+            fi += 1
+            print (f"\repoch:{i:3} training {fi / total:3.2%}", end="")
+        val_acc = evalute (model, test_seq)
+        if val_acc > best_acc:
+            best_epoch = i
+            best_acc = val_acc
+        save_model (model, i)
+        val_list.iloc[i, 0] = single_loss.item ()
+        val_list.iloc[i,1] = val_acc
+        print (f'\tepoch: {i:3} loss: {single_loss.item ():6.8e}')
+        val_list.plot ()
+        plt.show ()
+    val_list.to_csv (f"{Model_Folder}/{time.strftime ('%Y%m%d%H%M%s')}_loss_log.csv")
+    return best_epoch
 
-    print (f'epoch: {i:3} loss: {single_loss.item ():10.10f}')
 
-
-def model_predict(future_pred, test_inputs, scaler):
-    for i in range (future_pred):
-        seq = torch.FloatTensor (test_inputs[-train_window:])
-        with torch.no_grad ():
-            model.hidden = (torch.zeros (1, 1, model.hidden_layer_size),
-                            torch.zeros (1, 1, model.hidden_layer_size))
-            test_inputs.append (model (seq).item ())
+def model_predict(test_seq, scaler):
+    train_window = HyperParameter["train_window"]
+    with torch.no_grad ():
+        model.hidden = (torch.zeros (1, 1, model.hidden_layer_size),
+                        torch.zeros (1, 1, model.hidden_layer_size))
+        test_inputs.append (model (seq).item ())
     actual_predictions = scaler.inverse_transform (np.array (test_inputs[train_window:]).reshape (-1, 1))
     actual_predictions = np.apply_along_axis (no_negtive, 1, actual_predictions)
     return actual_predictions
@@ -96,78 +99,94 @@ def no_negtive(num):
         return num
 
 
+def data_normalized(data):
+    scaler = MinMaxScaler (feature_range=(-1, 1))
+    data_normalized = scaler.fit_transform (data.to_numpy ())
+    return data_normalized
+
+
+def create_inout_sequences(input_data, tw):
+    inout_seq = []
+    L = len (input_data)
+    for i in range (L - tw):
+        train_seq = input_data[i:i + tw]
+        train_label = input_data[i + tw:i + tw + 1]
+        inout_seq.append ((train_seq, train_label))
+    return inout_seq
+
+
+def series_process(normalized_data,inout_seq):
+    normalized_data = torch.FloatTensor (normalized_data)
+    inout_seq.extend(create_inout_sequences (normalized_data, HyperParameter["train_window"]))
+    return inout_seq
+
+
+def pre_process(data):
+    inout_seq = []
+    data = data_normalized (data)
+    aids = list(set(data[:,0]))
+    for aid in aids:
+        single_data = data[data[:,0] == aid]
+        if len(single_data) < HyperParameter["train_window"]:
+            continue
+        series_process(single_data[:,1:],inout_seq)
+    train_seq_num = int (len (inout_seq) * 8 / 10)
+    train_seq = inout_seq[0:train_seq_num]
+    test_seq = inout_seq[train_seq_num:]
+    return train_seq, test_seq
+
+
+HyperParameter = {"train_window": 5, "epochs": 200, "hidden_layer_sizes": 16, "input_size": 8, "output_size": 8}
+Model_Folder = "./model_out"
 if __name__ == '__main__':
-    # filepath = './cleaned_data.xlsx'
-    filepath = '附件1数据完成清理_ratio.xlsx'
-    data = pd.read_excel (filepath, sheet_name=0, parse_dates=[0], index_col=0)
-    i = -1
-    # train_windows = [20,20,8,8,8,8,8,8,8,8,8,8,8,8,8,8]
-    # epochss = [300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300]
-    # hidden_layer_sizes = [300,230,170,170,170,170,170,170,170,170,170,170,170,170,170,170]
-    train_windows =      [ 6,    6,   8,   6,    6,    8,   6,   8,   6,   7,   5,     7,    8,   8,   6,   7]
-    epochss =            [100, 160, 165, 200,  150,  60,  180, 180, 200, 150,  150,  200,  250, 180, 150, 140]
-    hidden_layer_sizes = [150, 170, 200, 80,   100,  250, 150, 100, 180, 150,  180,   100, 150, 150, 140, 130]
-    # no ratio data       √     √    √    √    √    √    √    √    √    √    √    √    √    √    √
-    # train_windows =      [4,    6,   8,   5,   6,   8,   6,   9,   6,   6,   7,   7,   8,   6,   6,   7]
-    # epochss =            [350, 160, 165, 190, 70,  60, 230,  180,  350, 280, 300, 250, 200, 160, 150, 140]
-    # hidden_layer_sizes = [150, 170, 200, 180, 200, 250, 150, 100, 180, 150, 100, 100, 150, 150, 140, 130]
-    forecast_data = pd.DataFrame (index=pd.date_range (start='2020/01/31', end='2020/10/31', freq='3M'),
-                                  columns=data.columns)
-    for index, item in data.iteritems ():
-        i += 1
-        # if i not in [11,12]:
-        #     continue
-        train_window = train_windows[i]
-        epochs = epochss[i]
-        # 数据预处理
-        normaled_train_data, normaled_test_data, test_data, train_data, scaler, scaler_test = pre_process (item)
-        train_inout_seq = create_inout_sequences (normaled_train_data, train_window)
+    filepath = '../../crawl-preprocess-storage/storage/vresult.csv'
+    data = pd.read_csv (filepath, parse_dates=[12, 13], index_col=0)
+    data = data.iloc[:, 0:9]
+    # 数据再次预处理为lstm的标准序列格式
+    train_seq, test_seq = pre_process (data)
+
+    mode = 0
+    if mode == 0:  # 训练模式
         # 初始化模型 使用交叉熵损失;使用adam优化器。
-        model = LSTM (hidden_layer_size=hidden_layer_sizes[i])
+        model = LSTM (hidden_layer_size=HyperParameter["hidden_layer_sizes"],
+                      input_size=HyperParameter["input_size"],
+                      output_size=HyperParameter["output_size"])
         loss_function = nn.MSELoss ()
         optimizer = torch.optim.Adam (model.parameters (), lr=0.001)
         try:
             # 训练模型
-            train_model (train_inout_seq, model, epochs)
+            best_epoch = train_model (train_seq, model, epochs=HyperParameter["epochs"])
+            mode = 1  # 切换模式
         except Exception as e:
-            continue
-        try:
-            # 训练集预测
-            start_point = 12
-            # if i == 10:
-            #     start_point = 4
-            train_inputs = normaled_train_data[start_point:train_window+start_point].tolist ()
-            train_predict_num = len (train_data) - train_window  - start_point
-            actual_predictions = model_predict (train_predict_num, train_inputs, scaler)
-            train_pred = pd.DataFrame (actual_predictions,
-                                       index=pd.date_range (start=train_data.index[train_window+start_point], end=train_data.index[-1],
-                                                            periods=train_predict_num))
-            # 画图
-            plt.plot (train_pred)
+            print (e)
+    if mode == 1:  # 预测模式
+        # model_params_file_name = input ("输入保存的参数文件名:")
+        model_params_file_name = "2020061700491592326197_1_params.pkl"
+        model = LSTM (hidden_layer_size=HyperParameter["hidden_layer_sizes"],
+                      input_size=HyperParameter["input_size"],
+                      output_size=HyperParameter["output_size"])
+        loss_function = nn.MSELoss ()
+        optimizer = torch.optim.Adam (model.parameters (), lr=0.001)
+        load_model(model,model_params_file_name)
 
-            # test预测
-            test_inputs = normaled_train_data[-train_window:].tolist ()
-            # print (test_inputs)
-            actual_predictions = model_predict (len (test_data), test_inputs, scaler)
-            pred = pd.DataFrame (actual_predictions,
-                                 index=pd.date_range (start=test_data.index[0], end=test_data.index[-1],
-                                                      periods=len (test_data)))
-            MSE = mean_squared_error(actual_predictions, test_data.values)
-            print(f"测试集均方误差为：{MSE:10.10e}")
-            MSE_data = pd.DataFrame({'MSE':MSE},index=[index]).to_csv('./MSE_data.csv', index=False, mode='a', encoding='utf8')
-            # 画图
-            plt.plot (train_data)
-            plt.plot (test_data)
-            plt.plot (pred)
+        acc = evalute(model,test_seq)
 
-            # 目标值预测
-            pred_inputs = normaled_test_data[-train_window:].tolist ()
-            actual_predictions_fore = model_predict (4, pred_inputs, scaler_test)
-            forecast_data[index] = actual_predictions_fore
-            plt.plot (forecast_data[index])
-            plt.savefig (index + '.png')
-            plt.show ()
-        except Exception as e:
-            forecast_data.to_csv ('./forecast_data_temp.csv', index=False, mode='a', encoding='utf8')
-            continue
+        actual_predictions = model_predict (len (test_data), test_inputs, scaler)
+
+        MSE = mean_squared_error (actual_predictions, test_data.values)
+        print (f"测试集均方误差为：{MSE:10.10e}")
+        MSE_data = pd.DataFrame ({'MSE': MSE}, index=[index]).to_csv ('./MSE_data.csv', index=False, mode='a',
+                                                                      encoding='utf8')
+        # 画图
+        plt.plot (train_data)
+        plt.plot (test_data)
+        plt.plot (pred)
+
+        # 目标值预测
+        pred_inputs = normaled_test_data[-train_window:].tolist ()
+        actual_predictions_fore = model_predict (4, pred_inputs, scaler_test)
+        forecast_data[index] = actual_predictions_fore
+        plt.plot (forecast_data[index])
+        plt.savefig (index + '.png')
+        plt.show ()
     forecast_data.to_csv ('./forecast_data.csv', index=False, mode='w', encoding='utf8')

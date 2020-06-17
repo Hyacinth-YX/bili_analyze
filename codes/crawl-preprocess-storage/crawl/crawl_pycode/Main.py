@@ -182,7 +182,7 @@ def main_download_follower_now():
         print (f"\rDownloading follower {(i + 1) / len (uid_list):3.2%} ...", end="")
     print ("\rDownload follower finished!")
 
-def run_download_recommend(counter=999999, dual=5):
+def run_download_recommend(counter=1, dual=5):
     print (f"\ndownload recommend start，间隔{dual}小时下载一次")
     # 下载20次推荐首页的视频相关信息，每次下载间隔12小时
     for i in range (1, counter + 1):
