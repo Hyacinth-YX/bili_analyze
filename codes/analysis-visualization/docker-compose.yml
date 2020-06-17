@@ -7,4 +7,4 @@ services:
     container_name: python_study
     volumes:
     - ./analyze_pycode:/root
-    command: /bin/sh -c "python /root/torch_lstm.py"
+    command: /bin/sh -c "cd /root;python /root/torch_lstm.py"
