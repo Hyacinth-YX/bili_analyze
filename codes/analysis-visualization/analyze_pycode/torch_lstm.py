@@ -151,7 +151,7 @@ HyperParameter = {"train_window": 5, "epochs": 300, "hidden_layer_sizes": 180, "
                   "batch_first": True}
 Model_Folder = "./model_out"
 if __name__ == '__main__':
-    filepath = '../../crawl-preprocess-storage/storage/vresult.csv'
+    filepath = './vresult.csv'
     data = pd.read_csv (filepath, parse_dates=[12, 13], index_col=0)
     data = data.iloc[:, 0:9]
     # 数据再次预处理为lstm的标准序列格式
