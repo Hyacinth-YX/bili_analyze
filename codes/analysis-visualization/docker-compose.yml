@@ -8,4 +8,4 @@ services:
     volumes:
     - ./analyze_pycode:/root/analysis-visualization/analyze_pycode
     - ../crawl-preprocess-storage/storage:/root/crawl-preprocess-storage/storage
-    command: python /root/analysis-visualization/analyze_pycode/torch_lstm.py
+    command: /bin/sh -c "python /root/analysis-visualization/analyze_pycode/torch_lstm.py"
