@@ -6,4 +6,6 @@ services:
       dockerfile: dockerfile
     container_name: python_study
     volumes:
-    - ./analyze_pycode:/root/analyze_pycode
+    - ./analyze_pycode:/root/analysis-visualization/analyze_pycode
+    - ../crawl-preprocess-storage/storage:/root/crawl-preprocess-storage/storage
+    command: python /root/analysis-visualization/analyze_pycode/torch_lstm.py

@@ -3,4 +3,3 @@ COPY requirements.txt /root/requirements.txt
 RUN pip install --upgrade pip \
  && pip install --default-timeout=10000 -r /root/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple \
  && rm -f /root/requirements.txt
-CMD python /root/analyze_pycode/torch_lstm.py
